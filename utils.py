@@ -57,9 +57,11 @@ class FuckPupedu(object):
         
         
     def watch(self):
+        time.sleep(MID_INTERVAL)
         duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g 19:15
         duration_div = duration_div.split(":")
         duration = int(duration_div[0]) * 60 + int(duration_div[1])
+        print(duration)
         start_time = time.time()
         while True:
             curr_time = time.time()
