@@ -34,7 +34,7 @@ class FuckPupedu(object):
     
     def learn(self):
         self.driver.find_element(By.XPATH, "//*[@id=\"my_list\"]/div/div/div/div/div[2]/div[2]/div[1]/div").click()
-        self.driver.implicitly_wait(MID_INTERVAL)
+        self.driver.implicitly_wait(LONG_INTERVAL)
         container = self.driver.find_element(By.ID, "step2")
         chapters = container.find_elements(By.CLASS_NAME, "chapters")
         for chapter in chapters:
@@ -42,13 +42,14 @@ class FuckPupedu(object):
             self.driver.implicitly_wait(SHORT_INTERVAL)
             titles = chapter.find_elements(By.CLASS_NAME, "titleName")
             for idx, title in enumerate(titles):
-                if idx < 2 or idx == len(titles) - 1:
-                    print("PPT自己随便翻翻就行了")
+                if idx < 2 or idx == len(titles) - 1: # 不包括PPT和测试
+                    # print("PPT自己随便翻翻就行了")
                     continue
                 else:
                     self.learn_video(title)
         
     def learn_video(self, title):
+        print("next one")
         title.click()
         self.driver.implicitly_wait(LONG_INTERVAL)
         btn = self.driver.find_element(By.CLASS_NAME, "outter")
@@ -60,15 +61,15 @@ class FuckPupedu(object):
         time.sleep(MID_INTERVAL)
         duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g 19:15
         duration_div = duration_div.split(":")
-        duration = int(duration_div[0]) * 60 + int(duration_div[1])
-        print(duration)
+        duration = int(duration_div[0]) * ONE_MINUTE + int(duration_div[1])
+        # print(duration)
         start_time = time.time()
         while True:
             curr_time = time.time()
             if curr_time - start_time > duration + ONE_MINUTE:
                 break
             try:
-                cont_btn = self.driver.find_element(By.CLASS_NAME, "el-button el-button--default el-button--small el-button--primary ")
+                cont_btn = self.driver.find_element(By.CLASS_NAME, "el-button")
                 cont_btn.click()
             except:
                 pass
