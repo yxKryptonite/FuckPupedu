@@ -1,5 +1,4 @@
-<div align=center><img src="assets/icon.png" height=150></div>
-<h1 align=center><font face="courier new">FuckPupedu</font></h1>
+<div align=center><img src="assets/icon.png" height=250></div>
 
 ## 简介
 
@@ -7,7 +6,7 @@
 
 ## 使用方法
 
-1. 安装 [Python 3.6+](https://www.python.org/downloads/)
+1. 安装 [Python 3.6+](https://www.python.org/downloads/) 和 [Chrome](https://www.google.cn/intl/zh-CN/chrome/) 浏览器
 2. 将本仓库克隆至本地
    
     ```bash
@@ -35,6 +34,11 @@
 ## 它不能做什么 (你需要做什么)
 
 它不能浏览 PPT ，完成测验，参与可能的"讨论" (欢迎 PR! )
+
+## 使用过程中，需要注意什么
+
+- 建议夜间插电挂机使用 (视频总时长超过20小时😴)
+- 使用时建议关闭网络代理
 
 ## LICENSE
 
