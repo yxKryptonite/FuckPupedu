@@ -1,4 +1,4 @@
-<div align=center><img src="assets/icon.png" height=250></div>
+<div align=center><img src="assets/icon-transparent.png" height=250></div>
 
 ## 简介
 

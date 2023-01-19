@@ -26,7 +26,7 @@ class FuckPupedu(object):
         mobile_emulation = {"deviceName": "iPhone 6"}
         options = Options()
         options.add_experimental_option("mobileEmulation", mobile_emulation)
-        # options.add_argument('--headless')
+        options.add_argument('--headless')
         self.driver = webdriver.Chrome(options=options)
 
         
