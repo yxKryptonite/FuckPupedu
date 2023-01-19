@@ -5,9 +5,11 @@ from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.keys import Keys
 import time
 
-LOGIN_URL = "http://www.pupedu.cn/app/login/login.do"
+LOGIN_URL      = "http://www.pupedu.cn/app/login/login.do"
 SHORT_INTERVAL = 1
 MID_INTERVAL   = 5
 LONG_INTERVAL  = 120
@@ -20,6 +22,7 @@ class FuckPupedu(object):
         mobile_emulation = {"deviceName": "iPhone 6"}
         options = Options()
         options.add_experimental_option("mobileEmulation", mobile_emulation)
+        options.add_argument('--headless')
         self.driver = webdriver.Chrome(options=options)
 
         
@@ -31,25 +34,63 @@ class FuckPupedu(object):
         self.driver.find_element(By.ID, "password").send_keys(self.password)
         self.driver.find_element(By.ID, "logon_button").click()
         self.driver.implicitly_wait(MID_INTERVAL)
+        print("登录成功")
+        
+    def search(self):
+        '''在最初始界面上搜寻章节和标题'''
+        container = self.driver.find_element(By.ID, "step2")
+        chapters = container.find_elements(By.CLASS_NAME, "chapters")
+        courses = []
+        for chapter in chapters:
+            self.driver.execute_script("arguments[0].scrollIntoView();", chapter)
+            self.driver.implicitly_wait(LONG_INTERVAL)
+            chapter.click()
+            self.driver.implicitly_wait(LONG_INTERVAL)
+            titles = chapter.find_elements(By.CLASS_NAME, "titleName")
+            courses.append(titles[2:-1]) # 去掉前两个和最后一个
+            
+        return courses # len(courses) 为 chapter 数，courses[i] 为第 i 个 chapter 的所有 title 的 list
+    
+    def get_idx(self, count, courses):
+        chapter_idx = 0
+        title_idx = 0
+        for chapter in courses:
+            if count < len(chapter):
+                title_idx = count
+                break
+            else:
+                chapter_idx += 1
+                count -= len(chapter)
+                
+        return chapter_idx, title_idx
     
     def learn(self):
         self.driver.find_element(By.XPATH, "//*[@id=\"my_list\"]/div/div/div/div/div[2]/div[2]/div[1]/div").click()
         self.driver.implicitly_wait(LONG_INTERVAL)
-        container = self.driver.find_element(By.ID, "step2")
-        chapters = container.find_elements(By.CLASS_NAME, "chapters")
-        for chapter in chapters:
-            chapter.click()
-            self.driver.implicitly_wait(SHORT_INTERVAL)
-            titles = chapter.find_elements(By.CLASS_NAME, "titleName")
-            for idx, title in enumerate(titles):
-                if idx < 2 or idx == len(titles) - 1: # 不包括PPT和测试
-                    # print("PPT自己随便翻翻就行了")
-                    continue
-                else:
-                    self.learn_video(title)
+        current_url = self.driver.current_url
+        courses = self.search() # [[title1, title2, ...], [title1, title2, ...], ...]
+        total_num = sum([len(chapter) for chapter in courses])
+        
+        count = 0
+        while count < total_num:
+            chapter_idx, title_idx = self.get_idx(count, courses)
+            print("开始学习第 {} 讲的第 {} 个视频".format(chapter_idx + 1, title_idx + 1))
+            self.learn_video(courses[chapter_idx][title_idx])
+            count += 1
+            print("学习完毕")
+            
+            self.driver.get(current_url)
+            self.driver.implicitly_wait(LONG_INTERVAL)
+            time.sleep(MID_INTERVAL)
+            courses = self.search()
+            while sum(len(chapter) for chapter in courses) < total_num:
+                self.driver.refresh()
+                time.sleep(MID_INTERVAL)
+                courses = self.search()
+                
         
     def learn_video(self, title):
-        print("next one")
+        self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
         self.driver.implicitly_wait(LONG_INTERVAL)
         btn = self.driver.find_element(By.CLASS_NAME, "outter")
@@ -58,11 +99,11 @@ class FuckPupedu(object):
         
         
     def watch(self):
-        time.sleep(MID_INTERVAL)
+        self.driver.implicitly_wait(MID_INTERVAL)
         duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g 19:15
         duration_div = duration_div.split(":")
         duration = int(duration_div[0]) * ONE_MINUTE + int(duration_div[1])
-        # print(duration)
+        # duration = 10 # DEBUG
         start_time = time.time()
         while True:
             curr_time = time.time()
