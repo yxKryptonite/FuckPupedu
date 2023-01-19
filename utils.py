@@ -9,11 +9,14 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import time
 from tqdm import tqdm
+import eventlet
+eventlet.monkey_patch()
 
 LOGIN_URL      = "http://www.pupedu.cn/app/login/login.do"
+IMMED_INTERVAL = 0.1
 SHORT_INTERVAL = 1
 MID_INTERVAL   = 5
-LONG_INTERVAL  = 120
+LONG_INTERVAL  = 1200
 ONE_MINUTE     = 60
 
 class FuckPupedu(object):
@@ -23,7 +26,7 @@ class FuckPupedu(object):
         mobile_emulation = {"deviceName": "iPhone 6"}
         options = Options()
         options.add_experimental_option("mobileEmulation", mobile_emulation)
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         self.driver = webdriver.Chrome(options=options)
 
         
@@ -98,22 +101,25 @@ class FuckPupedu(object):
         self.driver.implicitly_wait(LONG_INTERVAL)
         btn = self.driver.find_element(By.CLASS_NAME, "outter")
         btn.click()
+        start_time = time.time()
         
-        self.driver.implicitly_wait(MID_INTERVAL)
-        duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g 19:15
+        time.sleep(MID_INTERVAL) # wait for the duration to be loaded
+        duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g 19:25
         duration_div = duration_div.split(":")
         duration = int(duration_div[0]) * ONE_MINUTE + int(duration_div[1])
-        # duration = 10 # DEBUG
-        # print(duration)
-        start_time = time.time()
-        for _ in tqdm(range(duration + ONE_MINUTE)):
+        
+        for sec in tqdm(range(duration + ONE_MINUTE - MID_INTERVAL)):
             time.sleep(SHORT_INTERVAL)
             curr_time = time.time()
             if curr_time - start_time > duration + ONE_MINUTE:
                 break
-            try:
-                cont_btn = self.driver.find_element(By.CLASS_NAME, "el-button")
-                cont_btn.click()
-            except:
-                pass
+            
+            if sec % ONE_MINUTE == ONE_MINUTE - 1:
+                # 每分钟检查一下有无弹窗（如果一直检查会严重阻塞）
+                try:
+                    with eventlet.Timeout(IMMED_INTERVAL, False):
+                        cont_btn = self.driver.find_element(By.CLASS_NAME, "el-button")
+                        cont_btn.click()
+                except:
+                    pass
                     
