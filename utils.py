@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import time
+from tqdm import tqdm
 
 LOGIN_URL      = "http://www.pupedu.cn/app/login/login.do"
 SHORT_INTERVAL = 1
@@ -52,6 +53,7 @@ class FuckPupedu(object):
         return courses # len(courses) 为 chapter 数，courses[i] 为第 i 个 chapter 的所有 title 的 list
     
     def get_idx(self, count, courses):
+        '''返回当前应该学习的章节和标题的索引'''
         chapter_idx = 0
         title_idx = 0
         for chapter in courses:
@@ -75,7 +77,7 @@ class FuckPupedu(object):
         while count < total_num:
             chapter_idx, title_idx = self.get_idx(count, courses)
             print("开始学习第 {} 讲的第 {} 个视频".format(chapter_idx + 1, title_idx + 1))
-            self.learn_video(courses[chapter_idx][title_idx])
+            self.watch_video(courses[chapter_idx][title_idx])
             count += 1
             print("学习完毕")
             
@@ -89,23 +91,23 @@ class FuckPupedu(object):
                 courses = self.search()
                 
         
-    def learn_video(self, title):
+    def watch_video(self, title):
+        '''观看视频'''
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
         self.driver.implicitly_wait(LONG_INTERVAL)
         btn = self.driver.find_element(By.CLASS_NAME, "outter")
         btn.click()
-        self.watch()
         
-        
-    def watch(self):
         self.driver.implicitly_wait(MID_INTERVAL)
         duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g 19:15
         duration_div = duration_div.split(":")
         duration = int(duration_div[0]) * ONE_MINUTE + int(duration_div[1])
         # duration = 10 # DEBUG
+        # print(duration)
         start_time = time.time()
-        while True:
+        for _ in tqdm(range(duration + ONE_MINUTE)):
+            time.sleep(SHORT_INTERVAL)
             curr_time = time.time()
             if curr_time - start_time > duration + ONE_MINUTE:
                 break
@@ -115,6 +117,3 @@ class FuckPupedu(object):
             except:
                 pass
                     
-                
-            
-        
