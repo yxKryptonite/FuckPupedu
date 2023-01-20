@@ -25,8 +25,10 @@ class FuckPupedu(object):
         mobile_emulation = {"deviceName": "iPhone 6"}
         options = Options()
         options.add_experimental_option("mobileEmulation", mobile_emulation)
+        options.add_argument('-mute-audio')
         options.add_argument('--headless')
         self.driver = webdriver.Chrome(options=options)
+        self.actions = ActionChains(self.driver)
 
         
     def login(self):
@@ -38,6 +40,7 @@ class FuckPupedu(object):
         self.driver.find_element(By.ID, "logon_button").click()
         self.driver.implicitly_wait(MID_INTERVAL)
         print("登录成功")
+        
         
     def search(self):
         '''在最初始界面上搜寻章节和标题'''
@@ -54,6 +57,7 @@ class FuckPupedu(object):
             
         return courses # len(courses) 为 chapter 数，courses[i] 为第 i 个 chapter 的所有 title 的 list
     
+    
     def get_idx(self, count, courses):
         '''返回当前应该学习的章节和标题的索引'''
         chapter_idx = 0
@@ -68,7 +72,9 @@ class FuckPupedu(object):
                 
         return chapter_idx, title_idx
     
+    
     def learn(self):
+        # 当前页面：用户课程列表，下面点击劳动教育课程
         self.driver.find_element(By.XPATH, "//*[@id=\"my_list\"]/div/div/div/div/div[2]/div[2]/div[1]/div").click()
         self.driver.implicitly_wait(LONG_INTERVAL)
         current_url = self.driver.current_url
@@ -83,7 +89,7 @@ class FuckPupedu(object):
         while count < total_num:
             chapter_idx, title_idx = self.get_idx(count, courses)
             print("开始学习第 {} 讲的第 {} 个视频".format(chapter_idx + 1, title_idx + 1))
-            self.watch_video(courses[chapter_idx][title_idx])
+            self.play_video(courses[chapter_idx][title_idx])
             count += 1
             print("学习完毕，正在加载下一个视频")
             
@@ -97,8 +103,8 @@ class FuckPupedu(object):
                 courses = self.search()
                 
         
-    def watch_video(self, title):
-        '''观看视频'''
+    def play_video(self, title):
+        '''播放视频'''
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
         self.driver.implicitly_wait(LONG_INTERVAL)
@@ -111,10 +117,10 @@ class FuckPupedu(object):
         duration_div = duration_div.split(":")
         duration = int(duration_div[0]) * ONE_MINUTE + int(duration_div[1])
         
-        for sec in tqdm(range(duration + ONE_MINUTE - MID_INTERVAL)):
+        for sec in tqdm(range(duration)):
             time.sleep(SHORT_INTERVAL)
             curr_time = time.time()
-            if curr_time - start_time > duration + ONE_MINUTE:
+            if curr_time - start_time > duration + MID_INTERVAL:
                 break
             
             if sec % ONE_MINUTE == ONE_MINUTE - 1:
