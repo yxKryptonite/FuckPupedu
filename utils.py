@@ -121,7 +121,7 @@ class FuckPupedu(object):
         for sec in tqdm(range(duration + HALF_MINUTE - MID_INTERVAL)):
             time.sleep(SHORT_INTERVAL)
             curr_time = time.time()
-            if curr_time - start_time > duration + HALF_MINUTE:
+            if curr_time - start_time > duration + ONE_MINUTE:
                 break
             
             if sec % ONE_MINUTE == ONE_MINUTE - 1:
