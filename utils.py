@@ -21,8 +21,7 @@ ONE_MINUTE     = 60
 
 class FuckPupedu(object):
     def __init__(self, cfg):
-        self.id = cfg['ID']
-        self.password = cfg['PASSWORD']
+        self.cfg = cfg
         mobile_emulation = {"deviceName": "iPhone 6"}
         options = Options()
         options.add_experimental_option("mobileEmulation", mobile_emulation)
@@ -34,8 +33,8 @@ class FuckPupedu(object):
         self.driver.get(LOGIN_URL)
         self.driver.find_element(By.XPATH, "//*[@id=\"login\"]/div[2]/div[4]/span[2]").click()
         self.driver.implicitly_wait(MID_INTERVAL)
-        self.driver.find_element(By.ID, "user_name").send_keys(self.id)
-        self.driver.find_element(By.ID, "password").send_keys(self.password)
+        self.driver.find_element(By.ID, "user_name").send_keys(self.cfg['ID'])
+        self.driver.find_element(By.ID, "password").send_keys(self.cfg['PASSWORD'])
         self.driver.find_element(By.ID, "logon_button").click()
         self.driver.implicitly_wait(MID_INTERVAL)
         print("登录成功")
@@ -77,12 +76,16 @@ class FuckPupedu(object):
         total_num = sum([len(chapter) for chapter in courses])
         
         count = 0
+        for i in range(self.cfg['START_CHAPTER'] - 1):
+            count += len(courses[i])
+        count += self.cfg['START_TITLE'] - 1   
+            
         while count < total_num:
             chapter_idx, title_idx = self.get_idx(count, courses)
             print("开始学习第 {} 讲的第 {} 个视频".format(chapter_idx + 1, title_idx + 1))
             self.watch_video(courses[chapter_idx][title_idx])
             count += 1
-            print("学习完毕")
+            print("学习完毕，正在加载下一个视频")
             
             self.driver.get(current_url)
             self.driver.implicitly_wait(LONG_INTERVAL)
