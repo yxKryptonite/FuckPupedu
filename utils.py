@@ -40,7 +40,7 @@ class FuckPupedu(object):
         self.driver.find_element(By.ID, "password").send_keys(self.cfg['PASSWORD'])
         self.driver.find_element(By.ID, "logon_button").click()
         self.driver.implicitly_wait(MID_INTERVAL)
-        print("登录成功")
+        print("========= 登录成功 =========")
         
         
     def search(self):
@@ -87,12 +87,17 @@ class FuckPupedu(object):
             count += len(courses[i])
         count += self.cfg['START_TITLE'] - 1   
             
-        while count < total_num:
+        print("========= 程序开始 =========")
+        while True:
             chapter_idx, title_idx = self.get_idx(count, courses)
-            print("开始学习第 {} 讲的第 {} 个视频".format(chapter_idx + 1, title_idx + 1))
+            print("开始学习第 {} 讲的第 {} 个视频...".format(chapter_idx + 1, title_idx + 1))
             self.play_video(courses[chapter_idx][title_idx])
             count += 1
-            print("学习完毕，正在加载下一个视频")
+            if count < total_num:
+                print("学习完毕，正在加载下一个视频...")
+            else:
+                print("恭喜您，所有视频已经学习完毕！")
+                break
             
             self.driver.get(current_url)
             self.driver.implicitly_wait(LONG_INTERVAL)
@@ -102,6 +107,9 @@ class FuckPupedu(object):
                 self.driver.refresh()
                 time.sleep(MID_INTERVAL)
                 courses = self.search()
+                
+        self.driver.quit()
+        print("========= 程序结束 =========")
                 
         
     def play_video(self, title):
@@ -125,9 +133,10 @@ class FuckPupedu(object):
                 break
             
             if sec % ONE_MINUTE == ONE_MINUTE - 1:
-                # 每分钟检查一下有无弹窗（如果一直检查会严重阻塞）、并且刷新一次页面（使 driver 取得“控制权”）
+                # 1. 每分钟刷新一次页面（使 driver 取得“控制权”）
+                # 2. 每分钟检查一下有无弹窗（如果一直检查会严重阻塞）
                 self.driver.refresh()
-                self.driver.implicitly_wait(MID_INTERVAL)
+                self.driver.implicitly_wait(LONG_INTERVAL)
                 self.driver.find_element(By.CLASS_NAME, "outter").click()
                 try:
                     with eventlet.Timeout(IMMED_INTERVAL, False):

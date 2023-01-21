@@ -48,4 +48,4 @@
 
 [GPL-3.0](https://github.com/yxKryptonite/FuckPupedu/blob/master/LICENSE)
 
-copyright (c) 2022 [@yxKryptonite](https://github.com/yxKryptonite)
+copyright (c) 2023 [@yxKryptonite](https://github.com/yxKryptonite)
