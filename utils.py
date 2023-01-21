@@ -9,15 +9,13 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import time
 from tqdm import tqdm
-import eventlet
-eventlet.monkey_patch()
 
 LOGIN_URL      = "http://www.pupedu.cn/app/login/login.do"
 IMMED_INTERVAL = 0.1
 SHORT_INTERVAL = 1
 MID_INTERVAL   = 5
+LONG_INTERVAL  = 300 # 5 minutes
 HALF_MINUTE    = 30
-LONG_INTERVAL  = 1200
 ONE_MINUTE     = 60
 
 class FuckPupedu(object):
@@ -119,29 +117,18 @@ class FuckPupedu(object):
         self.driver.implicitly_wait(LONG_INTERVAL)
         btn = self.driver.find_element(By.CLASS_NAME, "outter")
         btn.click()
-        start_time = time.time()
         
         time.sleep(MID_INTERVAL) # wait for the duration to be loaded
-        duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g 19:25
+        duration_div = self.driver.find_element(By.CLASS_NAME, "duration").text # e.g. 19:25
         duration_div = duration_div.split(":")
         duration = int(duration_div[0]) * ONE_MINUTE + int(duration_div[1])
         
-        for sec in tqdm(range(duration + HALF_MINUTE - MID_INTERVAL)):
+        for sec in tqdm(range(duration + ONE_MINUTE)): # 加一分钟，用于补偿刷新的延迟
             time.sleep(SHORT_INTERVAL)
-            curr_time = time.time()
-            if curr_time - start_time > duration + ONE_MINUTE:
-                break
             
             if sec % ONE_MINUTE == ONE_MINUTE - 1:
-                # 1. 每分钟刷新一次页面（使 driver 取得“控制权”）
-                # 2. 每分钟检查一下有无弹窗（如果一直检查会严重阻塞）
+                # 每分钟刷新一次页面，避免弹窗
                 self.driver.refresh()
                 self.driver.implicitly_wait(LONG_INTERVAL)
                 self.driver.find_element(By.CLASS_NAME, "outter").click()
-                try:
-                    with eventlet.Timeout(IMMED_INTERVAL, False):
-                        cont_btn = self.driver.find_element(By.CLASS_NAME, "el-button")
-                        cont_btn.click()
-                except:
-                    pass
                     
