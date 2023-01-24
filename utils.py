@@ -89,10 +89,10 @@ class FuckPupedu(object):
             self.driver.implicitly_wait(LONG_INTERVAL)
             titles = chapter.find_elements(By.CLASS_NAME, "titleName")
             if learn_type == "VIDEO":
-                courses.append(titles[2:-1]) # 去掉前两个和最后一个
+                courses.append(titles[2:-1]) # 去掉前两个和最后一个，剩余的为视频
                 func = self.play_video
             elif learn_type == "NOTES":
-                courses.append(titles[2:-1]) # 去掉前两个和最后一个
+                courses.append(titles[1:-1]) # PPT 和视频都需要记笔记
                 func = self.take_notes
             elif learn_type == "PPT":
                 courses.append([titles[1]]) # PPT
@@ -140,7 +140,7 @@ class FuckPupedu(object):
         while True:
             chapter_idx, title_idx = self.get_idx(count, courses)
             print("开始学习第 {} 讲的第 {} 个 {}...".format(chapter_idx + 1, title_idx + 1, self.cfg[learn_type]))
-            func(courses[chapter_idx][title_idx]) # 学习函数
+            func(courses[chapter_idx][title_idx]) # 调用 `func` 函数
             count += 1
             if count < total_num:
                 print("学习完毕，正在加载下一个 {}...".format(self.cfg[learn_type]))
@@ -191,7 +191,13 @@ class FuckPupedu(object):
         初始界面：劳动教育课程
         目标：根据 `title` 这个 `WebElement` 记录笔记
         '''
-        raise NotImplementedError("take_notes is not implemented!")
+        self.driver.execute_script("arguments[0].scrollIntoView();", title)
+        title.click()
+        time.sleep(MID_INTERVAL)
+        self.driver.find_element(By.CLASS_NAME, "addNoteBtn").click()
+        time.sleep(SHORT_INTERVAL)
+        self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['MY_NOTES'])
+        self.driver.find_element(By.CLASS_NAME, "submitNoteBtn").click()
               
     
     def watch_ppt(self, title):
@@ -199,7 +205,20 @@ class FuckPupedu(object):
         初始界面：劳动教育课程
         目标：根据 `title` 这个 `WebElement` 看 PPT
         '''
-        raise NotImplementedError("watch_ppt is not implemented!")
+        self.driver.execute_script("arguments[0].scrollIntoView();", title)
+        title.click()
+        time.sleep(MID_INTERVAL)
+        try:
+            rb_btn = self.driver.find_element(By.CLASS_NAME, "rb")
+        except:
+            print("该 PPT 暂时无法加载，正在加载下一个...")
+            return
+        start_time = time.time()
+        while True:
+            curr_time = time.time()
+            if curr_time - start_time > HALF_MINUTE:
+                break
+            rb_btn.click()
     
     
     def do_test(self, title):
