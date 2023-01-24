@@ -74,6 +74,7 @@ class FuckPupedu(object):
         - 返回值: 一个含有两个元素的元组
             - 第一个元素为 courses
                 - 视频 courses: `[[title1, title2, ...], [title1, title2, ...], ...]` (len(courses) 为 chapter 数, courses[i] 为第 i 个 chapter 的所有 title 的 list)
+                - 笔记 courses: `[[PPT, title1, title2, ...], [PPT, title1, title2, ...], ...]`
                 - PPT courses: `[[PPT1], [PPT2], ...]`
                 - 测试 courses: `[[TEST1], [TEST2], ...]`
             - 第二个元素为学习 courses 的函数 func
@@ -142,22 +143,21 @@ class FuckPupedu(object):
             print("开始学习第 {} 讲的第 {} 个 {}...".format(chapter_idx + 1, title_idx + 1, self.cfg[learn_type]))
             func(courses[chapter_idx][title_idx]) # 调用 `func` 函数
             count += 1
+            self.driver.get(current_url)
+            self.driver.implicitly_wait(LONG_INTERVAL)
+            
             if count < total_num:
                 print("学习完毕，正在加载下一个 {}...".format(self.cfg[learn_type]))
             else:
                 print("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]))
                 break
             
-            self.driver.get(current_url)
-            self.driver.implicitly_wait(LONG_INTERVAL)
             time.sleep(MID_INTERVAL)
             courses, func = self.get_courses_and_func(learn_type)
             while sum(len(chapter) for chapter in courses) < total_num:
                 self.driver.refresh()
                 time.sleep(MID_INTERVAL)
                 courses, func = self.get_courses_and_func(learn_type)
-                
-        self.driver.quit()
                 
         
     def play_video(self, title):

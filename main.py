@@ -17,8 +17,6 @@ LOGIN_URL      = "http://www.pupedu.cn/app/login/login.do"
 COURSE_NAME    = "北京大学新时代劳动教育理论课 - 北京大学 - BJDX000100"
     
 def main():
-    print("========= 程序开始 =========")
-    
     with open('config.yml', 'r') as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
         cfg = {**cfg, **args, **TASKS} # merge `args`, `TASKS` into `cfg`
@@ -46,9 +44,9 @@ def main():
     if args["TEST"]:
         print("========= 做测验 =========")
         fucker.learn("TEST")
-        
-    print("========= 程序结束 =========")
     
 
 if __name__ == "__main__":
+    print("========= 程序开始 =========")
     main()
+    print("========= 程序结束 =========")
