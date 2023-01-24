@@ -67,14 +67,18 @@ class FuckPupedu(object):
         return False
     
     
-    def get_all_titles(self, learn_type):
+    def get_courses_and_func(self, learn_type):
         '''
         - 初始页面：劳动教育课程
         - 目标：搜寻所有章节下的所有符合类型的标题
-        - 返回值: 
-            - 视频 courses: [[title1, title2, ...], [title1, title2, ...], ...] (len(courses) 为 chapter 数, courses[i] 为第 i 个 chapter 的所有 title 的 list)
-            - PPT courses: [[PPT1], [PPT2], ...]
+        - 返回值: 一个含有两个元素的元组
+            - 第一个元素为 courses
+                - 视频 courses: `[[title1, title2, ...], [title1, title2, ...], ...]` (len(courses) 为 chapter 数, courses[i] 为第 i 个 chapter 的所有 title 的 list)
+                - PPT courses: `[[PPT1], [PPT2], ...]`
+                - 测试 courses: `[[TEST1], [TEST2], ...]`
+            - 第二个元素为学习 courses 的函数 func
         '''
+        func = None
         container = self.driver.find_element(By.ID, "step2")
         chapters = container.find_elements(By.CLASS_NAME, "chapters")
         courses = []
@@ -86,10 +90,20 @@ class FuckPupedu(object):
             titles = chapter.find_elements(By.CLASS_NAME, "titleName")
             if learn_type == "VIDEO":
                 courses.append(titles[2:-1]) # 去掉前两个和最后一个
+                func = self.play_video
+            elif learn_type == "NOTES":
+                courses.append(titles[2:-1]) # 去掉前两个和最后一个
+                func = self.take_notes
             elif learn_type == "PPT":
-                courses.append([titles[1]])
+                courses.append([titles[1]]) # PPT
+                func = self.watch_ppt
+            elif learn_type == "TEST":
+                courses.append([titles[-1]]) # 测验
+                func = self.do_test
+            else:
+                raise NotImplementedError("learn_type {} is not implemented!".format(learn_type))
             
-        return courses
+        return courses, func
     
     
     def get_idx(self, count, courses):
@@ -109,13 +123,13 @@ class FuckPupedu(object):
         return chapter_idx, title_idx
     
     
-    def learn(self, func):
+    def learn(self, learn_type):
         '''
         当前页面：劳动教育课程
-        目标：根据 `func` 决定怎样学习课程
+        目标：根据 `learn_type` 决定怎样学习课程
         '''
         current_url = self.driver.current_url
-        courses = self.get_all_titles() # [[title1, title2, ...], [title1, title2, ...], ...]
+        courses, func = self.get_courses_and_func(learn_type) # [[title1, title2, ...], [title1, title2, ...], ...]
         total_num = sum([len(chapter) for chapter in courses])
         
         count = 0
@@ -125,29 +139,32 @@ class FuckPupedu(object):
             
         while True:
             chapter_idx, title_idx = self.get_idx(count, courses)
-            print("开始学习第 {} 讲的第 {} 个视频...".format(chapter_idx + 1, title_idx + 1))
-            func(courses[chapter_idx][title_idx]) # 调用 `func` 函数
+            print("开始学习第 {} 讲的第 {} 个 {}...".format(chapter_idx + 1, title_idx + 1, self.cfg[learn_type]))
+            func(courses[chapter_idx][title_idx]) # 学习函数
             count += 1
             if count < total_num:
-                print("学习完毕，正在加载下一个视频...")
+                print("学习完毕，正在加载下一个 {}...".format(self.cfg[learn_type]))
             else:
-                print("恭喜您，所有视频已经学习完毕！")
+                print("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]))
                 break
             
             self.driver.get(current_url)
             self.driver.implicitly_wait(LONG_INTERVAL)
             time.sleep(MID_INTERVAL)
-            courses = self.get_all_titles()
+            courses, func = self.get_courses_and_func(learn_type)
             while sum(len(chapter) for chapter in courses) < total_num:
                 self.driver.refresh()
                 time.sleep(MID_INTERVAL)
-                courses = self.get_all_titles()
+                courses, func = self.get_courses_and_func(learn_type)
                 
         self.driver.quit()
                 
         
     def play_video(self, title):
-        '''播放视频'''
+        '''
+        初始界面：劳动教育课程
+        目标：根据 `title` 这个 `WebElement` 播放视频
+        '''
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
         self.driver.implicitly_wait(LONG_INTERVAL)
@@ -169,10 +186,25 @@ class FuckPupedu(object):
                 self.driver.find_element(By.CLASS_NAME, "outter").click()
                 
     
-    def take_notes(self):
+    def take_notes(self, title):
         '''
         初始界面：劳动教育课程
-        记录笔记
+        目标：根据 `title` 这个 `WebElement` 记录笔记
         '''
-        pass
-                    
+        raise NotImplementedError("take_notes is not implemented!")
+              
+    
+    def watch_ppt(self, title):
+        '''
+        初始界面：劳动教育课程
+        目标：根据 `title` 这个 `WebElement` 看 PPT
+        '''
+        raise NotImplementedError("watch_ppt is not implemented!")
+    
+    
+    def do_test(self, title):
+        '''
+        初始界面：劳动教育课程
+        目标：根据 `title` 这个 `WebElement` 做测验
+        '''
+        raise NotImplementedError("do_test is not implemented!")
