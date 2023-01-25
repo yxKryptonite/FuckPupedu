@@ -135,22 +135,22 @@ class FuckPupedu(object):
         total_num = sum([len(chapter) for chapter in courses])
         
         count = 0
-        for i in range(self.cfg['START_CHAPTER'] - 1):
+        for i in range(self.cfg[learn_type]['START_CHAPTER'] - 1):
             count += len(courses[i])
-        count += self.cfg['START_TITLE'] - 1   
+        count += self.cfg[learn_type]['START_TITLE'] - 1
             
         while True:
             chapter_idx, title_idx = self.get_idx(count, courses)
-            print("开始学习第 {} 讲的第 {} 个 {}...".format(chapter_idx + 1, title_idx + 1, self.cfg[learn_type]))
+            print("开始学习第 {} 讲的第 {} 个 {}...".format(chapter_idx + 1, title_idx + 1, self.cfg[learn_type]['NAME']))
             func(courses[chapter_idx][title_idx]) # 调用 `func` 函数
             count += 1
             self.driver.get(current_url)
             self.driver.implicitly_wait(LONG_INTERVAL)
             
             if count < total_num:
-                print("学习完毕，正在加载下一个 {}...".format(self.cfg[learn_type]))
+                print("学习完毕，正在加载下一个 {}...".format(self.cfg[learn_type]['NAME']))
             else:
-                print("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]))
+                print("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]['NAME']))
                 break
             
             courses, func = self.get_courses_and_func(learn_type)
@@ -193,10 +193,16 @@ class FuckPupedu(object):
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
         time.sleep(MID_INTERVAL)
+        # remove mobile emulation
+        self.driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+        
         self.driver.find_element(By.CLASS_NAME, "addNoteBtn").click()
         time.sleep(SHORT_INTERVAL)
-        self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['MY_NOTES'])
+        self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['NOTES']['MY_NOTES'])
         self.driver.find_element(By.CLASS_NAME, "submitNoteBtn").click()
+        
+        # add mobile emulation back
+        self.driver.create_options().add_experimental_option("mobileEmulation", self.mobile_emulation)
               
     
     def watch_ppt(self, title):
@@ -222,7 +228,7 @@ class FuckPupedu(object):
                 break
             rb_btn.click()
             
-        # add mobile emulation back to iPhone 6
+        # add mobile emulation back
         self.driver.create_options().add_experimental_option("mobileEmulation", self.mobile_emulation)
     
     
