@@ -20,9 +20,9 @@ ONE_MINUTE     = 60
 class FuckPupedu(object):
     def __init__(self, cfg):
         self.cfg = cfg
-        mobile_emulation = {"deviceName": "iPhone 6"}
+        self.mobile_emulation = {"deviceName": "iPhone 6"}
         options = Options()
-        options.add_experimental_option("mobileEmulation", mobile_emulation)
+        options.add_experimental_option("mobileEmulation", self.mobile_emulation)
         options.add_argument('-mute-audio')
         if not cfg['DEBUG']:
             options.add_argument('--headless')
@@ -76,9 +76,10 @@ class FuckPupedu(object):
                 - 视频 courses: `[[title1, title2, ...], [title1, title2, ...], ...]` (len(courses) 为 chapter 数, courses[i] 为第 i 个 chapter 的所有 title 的 list)
                 - 笔记 courses: `[[PPT, title1, title2, ...], [PPT, title1, title2, ...], ...]`
                 - PPT courses: `[[PPT1], [PPT2], ...]`
-                - 测试 courses: `[[TEST1], [TEST2], ...]`
+                - 测验 courses: `[[TEST1], [TEST2], ...]`
             - 第二个元素为学习 courses 的函数 func
         '''
+        time.sleep(MID_INTERVAL) # 先等待一段时间，等待所有章节加载完毕
         func = None
         container = self.driver.find_element(By.ID, "step2")
         chapters = container.find_elements(By.CLASS_NAME, "chapters")
@@ -109,7 +110,7 @@ class FuckPupedu(object):
     
     def get_idx(self, count, courses):
         '''
-        返回值：当前应该学习的 章节索引 和 标题索引
+        返回值：当前应该学习的 `章节索引` 和 `标题索引`
         '''
         chapter_idx = 0
         title_idx = 0
@@ -152,11 +153,9 @@ class FuckPupedu(object):
                 print("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]))
                 break
             
-            time.sleep(MID_INTERVAL)
             courses, func = self.get_courses_and_func(learn_type)
             while sum(len(chapter) for chapter in courses) < total_num:
                 self.driver.refresh()
-                time.sleep(MID_INTERVAL)
                 courses, func = self.get_courses_and_func(learn_type)
                 
         
@@ -208,6 +207,9 @@ class FuckPupedu(object):
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
         time.sleep(MID_INTERVAL)
+        # remove mobile emulation
+        self.driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+        
         try:
             rb_btn = self.driver.find_element(By.CLASS_NAME, "rb")
         except:
@@ -219,6 +221,9 @@ class FuckPupedu(object):
             if curr_time - start_time > HALF_MINUTE:
                 break
             rb_btn.click()
+            
+        # add mobile emulation back to iPhone 6
+        self.driver.create_options().add_experimental_option("mobileEmulation", self.mobile_emulation)
     
     
     def do_test(self, title):
