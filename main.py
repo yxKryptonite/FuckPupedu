@@ -2,13 +2,13 @@ import yaml
 from utils import FuckPupedu
 from configargparse import ArgumentParser
 
-# 学习任务种类, learn_type = [VIDEO, TEST, NOTES, PPT]
+# 学习任务种类, learn_type = [VIDEO, PPT, NOTES, TEST] # VPNT
 parser = ArgumentParser()
 parser.add_argument("-d", "--DEBUG", action="store_true", help="debug mode")
 parser.add_argument("-v", "--DO_VIDEO", action="store_true", help="learn videos")
-parser.add_argument("-t", "--DO_TEST", action="store_true", help="do test")
-parser.add_argument("-n", "--DO_NOTES", action="store_true", help="take notes")
 parser.add_argument("-p", "--DO_PPT", action="store_true", help="learn ppt")
+parser.add_argument("-n", "--DO_NOTES", action="store_true", help="take notes")
+parser.add_argument("-t", "--DO_TEST", action="store_true", help="do test")
 args = vars(parser.parse_args())
 
 LOGIN_URL      = "http://www.pupedu.cn/app/login/login.do"

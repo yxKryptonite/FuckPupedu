@@ -27,7 +27,12 @@ class FuckPupedu(object):
         if not cfg['DEBUG']:
             options.add_argument('--headless')
         self.driver = webdriver.Chrome(options=options)
-        self.actions = ActionChains(self.driver)
+        self.functions = {
+            "VIDEO": self.play_video,
+            "PPT":   self.watch_ppt,
+            "NOTES": self.take_notes,
+            "TEST":  self.do_test
+        }
 
         
     def login(self, url):
@@ -67,20 +72,17 @@ class FuckPupedu(object):
         return False
     
     
-    def get_courses_and_func(self, learn_type):
+    def get_courses(self, learn_type):
         '''
         - 初始页面：劳动教育课程
-        - 目标：搜寻所有章节下的所有符合类型的标题
-        - 返回值: 一个含有两个元素的元组
-            - 第一个元素为 courses
-                - 视频 courses: `[[title1, title2, ...], [title1, title2, ...], ...]` (len(courses) 为 chapter 数, courses[i] 为第 i 个 chapter 的所有 title 的 list)
-                - 笔记 courses: `[[PPT, title1, title2, ...], [PPT, title1, title2, ...], ...]`
-                - PPT courses: `[[PPT1], [PPT2], ...]`
-                - 测验 courses: `[[TEST1], [TEST2], ...]`
-            - 第二个元素为学习 courses 的函数 func
+        - 目标：搜寻所有章节下的所有符合类型的标题元素
+        - 返回值: 根据 `learn_type` 返回的 `courses`: len(courses) 为 chapter 数, courses[i] 为第 i 个 chapter 的所有 title 的 list
+            - 视频 courses: `[[title1, title2, ...], [title1, title2, ...], ...]`
+            - 笔记 courses: `[[PPT, title1, title2, ...], [PPT, title1, title2, ...], ...]`
+            - PPT courses: `[[PPT1], [PPT2], ...]`
+            - 测验 courses: `[[TEST1], [TEST2], ...]`
         '''
         time.sleep(MID_INTERVAL) # 先等待一段时间，等待所有章节加载完毕
-        func = None
         container = self.driver.find_element(By.ID, "step2")
         chapters = container.find_elements(By.CLASS_NAME, "chapters")
         courses = []
@@ -92,20 +94,16 @@ class FuckPupedu(object):
             titles = chapter.find_elements(By.CLASS_NAME, "titleName")
             if learn_type == "VIDEO":
                 courses.append(titles[2:-1]) # 去掉前两个和最后一个，剩余的为视频
-                func = self.play_video
             elif learn_type == "NOTES":
                 courses.append(titles[1:-1]) # PPT 和视频都需要记笔记
-                func = self.take_notes
             elif learn_type == "PPT":
                 courses.append([titles[1]]) # PPT
-                func = self.watch_ppt
             elif learn_type == "TEST":
                 courses.append([titles[-1]]) # 测验
-                func = self.do_test
             else:
                 raise NotImplementedError("learn_type {} is not implemented!".format(learn_type))
             
-        return courses, func
+        return courses
     
     
     def get_idx(self, count, courses):
@@ -131,8 +129,9 @@ class FuckPupedu(object):
         目标：根据 `learn_type` 决定怎样学习课程
         '''
         current_url = self.driver.current_url
-        courses, func = self.get_courses_and_func(learn_type) # [[title1, title2, ...], [title1, title2, ...], ...]
+        courses = self.get_courses(learn_type) # [[title1, title2, ...], [title1, title2, ...], ...]
         total_num = sum([len(chapter) for chapter in courses])
+        func = self.functions.get(learn_type)
         
         count = 0
         for i in range(self.cfg[learn_type]['START_CHAPTER'] - 1):
@@ -153,10 +152,10 @@ class FuckPupedu(object):
                 print("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]['NAME']))
                 break
             
-            courses, func = self.get_courses_and_func(learn_type)
+            courses = self.get_courses(learn_type)
             while sum(len(chapter) for chapter in courses) < total_num:
                 self.driver.refresh()
-                courses, func = self.get_courses_and_func(learn_type)
+                courses = self.get_courses(learn_type)
                 
         
     def play_video(self, title):
@@ -183,28 +182,8 @@ class FuckPupedu(object):
                 self.driver.refresh()
                 self.driver.implicitly_wait(LONG_INTERVAL)
                 self.driver.find_element(By.CLASS_NAME, "outter").click()
+        
                 
-    
-    def take_notes(self, title):
-        '''
-        初始界面：劳动教育课程
-        目标：根据 `title` 这个 `WebElement` 记录笔记
-        '''
-        self.driver.execute_script("arguments[0].scrollIntoView();", title)
-        title.click()
-        time.sleep(MID_INTERVAL)
-        # remove mobile emulation
-        self.driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
-        
-        self.driver.find_element(By.CLASS_NAME, "addNoteBtn").click()
-        time.sleep(SHORT_INTERVAL)
-        self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['NOTES']['MY_NOTES'])
-        self.driver.find_element(By.CLASS_NAME, "submitNoteBtn").click()
-        
-        # add mobile emulation back
-        self.driver.create_options().add_experimental_option("mobileEmulation", self.mobile_emulation)
-              
-    
     def watch_ppt(self, title):
         '''
         初始界面：劳动教育课程
@@ -230,6 +209,26 @@ class FuckPupedu(object):
             
         # add mobile emulation back
         self.driver.create_options().add_experimental_option("mobileEmulation", self.mobile_emulation)
+        
+        
+    def take_notes(self, title):
+        '''
+        初始界面：劳动教育课程
+        目标：根据 `title` 这个 `WebElement` 记录笔记
+        '''
+        self.driver.execute_script("arguments[0].scrollIntoView();", title)
+        title.click()
+        time.sleep(MID_INTERVAL)
+        # remove mobile emulation
+        self.driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+        
+        self.driver.find_element(By.CLASS_NAME, "addNoteBtn").click()
+        time.sleep(SHORT_INTERVAL)
+        self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['NOTES']['MY_NOTES'])
+        self.driver.find_element(By.CLASS_NAME, "submitNoteBtn").click()
+        
+        # add mobile emulation back
+        self.driver.create_options().add_experimental_option("mobileEmulation", self.mobile_emulation)
     
     
     def do_test(self, title):
@@ -237,4 +236,30 @@ class FuckPupedu(object):
         初始界面：劳动教育课程
         目标：根据 `title` 这个 `WebElement` 做测验
         '''
-        raise NotImplementedError("do_test is not implemented!")
+        self.driver.execute_script("arguments[0].scrollIntoView();", title)
+        title.click()
+        time.sleep(MID_INTERVAL)
+        
+        # 已经做过了但没有被计入
+        try:
+            self.driver.switch_to.alert.accept()
+            self.driver.find_element(By.ID, "homeworkReSubmit").click()
+            self.driver.implicitly_wait(MID_INTERVAL)
+        except:
+            pass
+        
+        answer_areas = self.driver.find_elements(By.CLASS_NAME, "answerArea")
+        for answer_area in answer_areas:
+            choice = answer_area.find_elements(By.CSS_SELECTOR, "a")[0] # 选A
+            self.driver.execute_script("arguments[0].scrollIntoView();", choice)
+            self.driver.execute_script("arguments[0].click();", choice)
+            
+        self.driver.find_element(By.ID, "homeworkSubmit").click()
+        time.sleep(SHORT_INTERVAL) # 等待弹窗
+        self.driver.switch_to.alert.accept()
+        time.sleep(MID_INTERVAL) # 等待下一个弹窗
+        try:
+            self.driver.switch_to.alert.accept()
+        except:
+            pass
+        
