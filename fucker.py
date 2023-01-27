@@ -79,8 +79,8 @@ class FuckPupedu(object):
         - 目标：搜寻所有章节下的所有符合类型的标题元素
         - 返回值: 根据 `learn_type` 返回的 `courses`: len(courses) 为 chapter 数, courses[i] 为第 i 个 chapter 的所有 title 的 list
             - 视频 courses: `[[title1, title2, ...], [title1, title2, ...], ...]`
-            - 笔记 courses: `[[PPT, title1, title2, ...], [PPT, title1, title2, ...], ...]`
             - PPT courses: `[[PPT1], [PPT2], ...]`
+            - 笔记 courses: `[[PPT1], [PPT2], ...]`
             - 测验 courses: `[[TEST1], [TEST2], ...]`
         '''
         time.sleep(MID_INTERVAL) # 先等待一段时间，等待所有章节加载完毕

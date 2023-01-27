@@ -15,17 +15,17 @@ VIDEO:
 PPT:
     NAME:          PPT
     START_CHAPTER: 1   # 从第几讲开始
-    START_TITLE:   1   # 从这一讲的第几个 PPT 开始
+    START_TITLE:   1   # 无需更改
 
 # 笔记选项
 NOTES:
     NAME:          笔记
     START_CHAPTER: 1   # 从第几讲开始
-    START_TITLE:   1   # 从这一讲的第几个开始 (PPT 和视频都需要记笔记)
+    START_TITLE:   1   # 无需更改
     MY_NOTES:      马克思主义理论将劳动问题进行哲学化、理论化、思想化的探讨和研究。   # 笔记内容
 
 # 测验选项
 TEST:
     NAME:          测验
     START_CHAPTER: 1   # 从第几讲开始
-    START_TITLE:   1   # 从这一讲的第几个 测验 开始" > config.yml
+    START_TITLE:   1   # 无需更改" > config.yml
