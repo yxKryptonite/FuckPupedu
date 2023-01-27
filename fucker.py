@@ -9,6 +9,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import time
 from tqdm import tqdm
+from logger import Logger
 
 IMMED_INTERVAL = 0.1
 SHORT_INTERVAL = 1
@@ -95,7 +96,7 @@ class FuckPupedu(object):
             if learn_type == "VIDEO":
                 courses.append(titles[2:-1]) # 去掉前两个和最后一个，剩余的为视频
             elif learn_type == "NOTES":
-                courses.append(titles[1:3]) # 发布2条笔记、5条评论即可
+                courses.append([titles[1]]) # 在一节中，发布2条笔记、5条评论即可
             elif learn_type == "PPT":
                 courses.append([titles[1]]) # PPT
             elif learn_type == "TEST":
@@ -140,16 +141,16 @@ class FuckPupedu(object):
             
         while True:
             chapter_idx, title_idx = self.get_idx(count, courses)
-            print("开始学习第 {} 讲的第 {} 个 {}...".format(chapter_idx + 1, title_idx + 1, self.cfg[learn_type]['NAME']))
+            Logger.log("开始学习第 {} 讲的第 {} 个 {}...".format(chapter_idx + 1, title_idx + 1, self.cfg[learn_type]['NAME']))
             func(courses[chapter_idx][title_idx]) # 调用 `func` 函数
             count += 1
             self.driver.get(current_url)
             self.driver.implicitly_wait(LONG_INTERVAL)
             
             if count < total_num:
-                print("学习完毕，正在加载下一个 {}...".format(self.cfg[learn_type]['NAME']))
+                Logger.log("学习完毕，正在加载下一个 {}...".format(self.cfg[learn_type]['NAME']))
             else:
-                print("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]['NAME']))
+                Logger.log("恭喜您，所有 {} 已经学习完毕！".format(self.cfg[learn_type]['NAME']))
                 break
             
             courses = self.get_courses(learn_type)
@@ -198,7 +199,7 @@ class FuckPupedu(object):
         try:
             rb_btn = self.driver.find_element(By.CLASS_NAME, "rb")
         except:
-            print("该 PPT 暂时无法加载，正在加载下一个...")
+            Logger.log("该 PPT 暂时无法加载，正在加载下一个...")
             return
         start_time = time.time()
         while True:
@@ -223,14 +224,18 @@ class FuckPupedu(object):
         # remove mobile emulation
         self.driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
         
-        self.driver.find_element(By.CLASS_NAME, "addNoteBtn").click()
-        time.sleep(SHORT_INTERVAL)
-        self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['NOTES']['MY_NOTES'])
-        self.driver.find_element(By.CLASS_NAME, "submitNoteBtn").click()
+        # 发笔记
+        for _ in range(2):
+            self.driver.find_element(By.CLASS_NAME, "addNoteBtn").click()
+            time.sleep(SHORT_INTERVAL)
+            self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['NOTES']['MY_NOTES'])
+            submitNoteBtn = self.driver.find_element(By.CLASS_NAME, "submitNoteBtn")
+            self.driver.execute_script("arguments[0].click();", submitNoteBtn)
+            time.sleep(SHORT_INTERVAL)
         
         # 发评论
         self.driver.find_element(By.CLASS_NAME, "el-switch__core").click()
-        time.sleep(SHORT_INTERVAL) 
+        time.sleep(SHORT_INTERVAL)
         self.driver.find_elements(By.CLASS_NAME, "commentBtn")[0].click()
         time.sleep(SHORT_INTERVAL)
         
