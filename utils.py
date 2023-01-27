@@ -95,7 +95,7 @@ class FuckPupedu(object):
             if learn_type == "VIDEO":
                 courses.append(titles[2:-1]) # 去掉前两个和最后一个，剩余的为视频
             elif learn_type == "NOTES":
-                courses.append(titles[1:-1]) # PPT 和视频都需要记笔记
+                courses.append(titles[1:3]) # 发布2条笔记、5条评论即可
             elif learn_type == "PPT":
                 courses.append([titles[1]]) # PPT
             elif learn_type == "TEST":
@@ -125,8 +125,8 @@ class FuckPupedu(object):
     
     def learn(self, learn_type):
         '''
-        当前页面：劳动教育课程
-        目标：根据 `learn_type` 决定怎样学习课程
+        - 当前页面：劳动教育课程
+        - 目标：根据 `learn_type` 决定怎样学习课程
         '''
         current_url = self.driver.current_url
         courses = self.get_courses(learn_type) # [[title1, title2, ...], [title1, title2, ...], ...]
@@ -160,8 +160,8 @@ class FuckPupedu(object):
         
     def play_video(self, title):
         '''
-        初始界面：劳动教育课程
-        目标：根据 `title` 这个 `WebElement` 播放视频
+        - 初始界面：劳动教育课程
+        - 目标：根据 `title` 这个 `WebElement` 播放视频
         '''
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
@@ -186,8 +186,8 @@ class FuckPupedu(object):
                 
     def watch_ppt(self, title):
         '''
-        初始界面：劳动教育课程
-        目标：根据 `title` 这个 `WebElement` 看 PPT
+        - 初始界面：劳动教育课程
+        - 目标：根据 `title` 这个 `WebElement` 看 PPT
         '''
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
@@ -213,8 +213,9 @@ class FuckPupedu(object):
         
     def take_notes(self, title):
         '''
-        初始界面：劳动教育课程
-        目标：根据 `title` 这个 `WebElement` 记录笔记
+        - 初始界面：劳动教育课程
+        - 目标：根据 `title` 这个 `WebElement` 记录笔记
+        - 注：发布2条笔记、5条评论即可满足要求
         '''
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
@@ -227,14 +228,26 @@ class FuckPupedu(object):
         self.driver.find_element(By.CLASS_NAME, "el-textarea__inner").send_keys(self.cfg['NOTES']['MY_NOTES'])
         self.driver.find_element(By.CLASS_NAME, "submitNoteBtn").click()
         
+        # 发评论
+        self.driver.find_element(By.CLASS_NAME, "el-switch__core").click()
+        time.sleep(SHORT_INTERVAL) 
+        self.driver.find_elements(By.CLASS_NAME, "commentBtn")[0].click()
+        time.sleep(SHORT_INTERVAL)
+        
+        for _ in range(5):
+            cmt_area = self.driver.find_element(By.CLASS_NAME, "commentListTop")
+            cmt_area.find_element(By.CLASS_NAME, "el-input__inner").send_keys(self.cfg['NOTES']['MY_NOTES'])
+            cmt_area.find_element(By.CSS_SELECTOR, "span").click()
+            time.sleep(SHORT_INTERVAL)
+        
         # add mobile emulation back
         self.driver.create_options().add_experimental_option("mobileEmulation", self.mobile_emulation)
     
     
     def do_test(self, title):
         '''
-        初始界面：劳动教育课程
-        目标：根据 `title` 这个 `WebElement` 做测验
+        - 初始界面：劳动教育课程
+        - 目标：根据 `title` 这个 `WebElement` 做测验
         '''
         self.driver.execute_script("arguments[0].scrollIntoView();", title)
         title.click()
