@@ -16,7 +16,7 @@ LOGIN_URL      = "http://www.pupedu.cn/app/login/login.do"
 COURSE_NAME    = "北京大学新时代劳动教育理论课 - 北京大学 - BJDX000100"
     
 def main():
-    with open('config.yml', 'r') as f:
+    with open('config.yml', 'r', encoding='utf-8') as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
         cfg = {**cfg, **args} # merge `args` into `cfg`
         Fucker = FuckPupedu(cfg)
