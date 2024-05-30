@@ -6,7 +6,8 @@
 
 ## 使用方法
 
-1. 安装 [Python 3.6+](https://www.python.org/downloads/) 和 [Chrome](https://www.google.cn/intl/zh-CN/chrome/) 浏览器
+1. 安装 [Python 3.6+](https://www.python.org/downloads/) ， [Chrome](https://www.google.cn/intl/zh-CN/chrome/) 浏览器 和 对应版本的[chromedriver](https://chromedriver.storage.googleapis.com/index.html)，并且做好配置。
+
 2. 将本仓库克隆至本地
    
     ```bash
@@ -29,7 +30,7 @@
 
 ## 它能做什么
 
-- [x] 水视频，对应命令行参数的 `v`
+- [x] 水视频，对应命令行参数的 `v`，**现在可以倍速播放，拒绝耗电**
 - [x] 水 PPT，对应命令行参数的 `p`
 - [x] 水笔记，对应命令行参数的 `n`
 - [x] 水测试，对应命令行参数的 `t`
