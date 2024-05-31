@@ -17,6 +17,7 @@ MID_INTERVAL   = 5
 LONG_INTERVAL  = 300 # 5 minutes
 HALF_MINUTE    = 30
 ONE_MINUTE     = 60
+PLAYBACK_RATE  = 10 # 回放速度
 
 class FuckPupedu(object):
     def __init__(self, cfg):
@@ -44,14 +45,15 @@ class FuckPupedu(object):
         '''
         try:
             self.driver.get(url)
-            self.driver.find_element(By.XPATH, "//*[@id=\"login\"]/div[2]/div[4]/span[2]").click()
+            self.driver.find_element(By.XPATH, "//*[text()='北大学生登录入口']").click()
             self.driver.implicitly_wait(MID_INTERVAL)
             self.driver.find_element(By.ID, "user_name").send_keys(self.cfg['ID'])
             self.driver.find_element(By.ID, "password").send_keys(self.cfg['PASSWORD'])
             self.driver.find_element(By.ID, "logon_button").click()
             self.driver.implicitly_wait(MID_INTERVAL)
             return True
-        except:
+        except Exception as e:
+            Logger.log(f'Login error: \n{e}')
             return False
         
         
@@ -175,11 +177,13 @@ class FuckPupedu(object):
         duration_div = duration_div.split(":")
         duration = int(duration_div[0]) * ONE_MINUTE + int(duration_div[1])
         
-        for sec in tqdm(range(duration + ONE_MINUTE)): # 加一分钟，用于补偿刷新的延迟
+        for sec in tqdm(range((duration + ONE_MINUTE) // PLAYBACK_RATE + 1)): # 加一分钟，用于补偿刷新的延迟
+            # 设置播放倍速
+            self.driver.execute_script(f"document.getElementsByTagName('video')[0].playbackRate = {PLAYBACK_RATE};")
             time.sleep(SHORT_INTERVAL)
             
-            if sec % ONE_MINUTE == ONE_MINUTE - 1:
-                # 每分钟刷新一次页面，避免弹窗
+            if sec % (4*ONE_MINUTE) == (4*ONE_MINUTE) - 1: 
+                # 每 4 分钟刷新一次页面，避免弹窗
                 self.driver.refresh()
                 self.driver.implicitly_wait(LONG_INTERVAL)
                 self.driver.find_element(By.CLASS_NAME, "outter").click()
